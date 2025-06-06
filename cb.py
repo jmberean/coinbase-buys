@@ -20,19 +20,33 @@ if not API_KEY or not API_SECRET:
     )
     exit()
 
-AMOUNT_TO_BUY = 88.8  # Default amount to buy in USD if not specified
-# Cryptocurrencies you want to buy and the USD amount for each
+# Total investment amount (adjust this to your desired total investment)
+TOTAL_INVESTMENT = 100.00
+
+# Portfolio allocation percentages based on optimized risk/reward strategy
+PORTFOLIO_ALLOCATION = {
+    # Core Foundation (20%)
+    "BTC-USD": 0.10,   # 10% - Store of value anchor
+    "ETH-USD": 0.10,   # 10% - Smart contract foundation
+    
+    # Established Growth Plays (60%) 
+    "SOL-USD": 0.15,   # 15% - Consumer blockchain leader
+    "XRP-USD": 0.15,   # 15% - Enterprise payments with regulatory clarity
+    "LINK-USD": 0.15,  # 15% - Essential oracle infrastructure
+    "AVAX-USD": 0.15,  # 15% - Institutional tokenization platform
+    
+    # Speculative Upside (20%)
+    "UNI-USD": 0.04,   # 4% - DeFi protocol with fee switch potential
+    "QNT-USD": 0.04,   # 4% - Enterprise interoperability
+    "DOT-USD": 0.04,   # 4% - Parachain innovation
+    "ADA-USD": 0.04,   # 4% - Academic development approach
+    "DOGE-USD": 0.04,  # 4% - Community-driven payments
+}
+
+# Calculate dollar amounts based on allocation percentages
 CRYPTOS_TO_BUY = {
-    "BTC-USD": AMOUNT_TO_BUY,  # Buy $10 worth of Bitcoin
-    "ETH-USD": AMOUNT_TO_BUY,  # Buy $10 worth of Ethereum
-    "SOL-USD": AMOUNT_TO_BUY,   # Buy $5 worth of Solana
-    "XRP-USD": AMOUNT_TO_BUY,   # Buy $7.5 worth of Cardano
-    "UNI-USD": AMOUNT_TO_BUY, # Buy $10 worth of Dogecoin
-    "AVAX-USD": AMOUNT_TO_BUY,
-    "ADA-USD": AMOUNT_TO_BUY,
-    "DOT-USD": AMOUNT_TO_BUY,
-    "LINK-USD": AMOUNT_TO_BUY,
-    "DOGE-USD": AMOUNT_TO_BUY,
+    crypto: round(TOTAL_INVESTMENT * percentage, 2)
+    for crypto, percentage in PORTFOLIO_ALLOCATION.items()
 }
 
 # --- Initialize Coinbase API Client ---
