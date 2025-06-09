@@ -21,7 +21,7 @@ if not API_KEY or not API_SECRET:
     exit()
 
 # Total investment amount (adjust this to your desired total investment)
-TOTAL_INVESTMENT = 100.00
+TOTAL_INVESTMENT = 50.00
 
 # Portfolio allocation percentages based on optimized risk/reward strategy
 PORTFOLIO_ALLOCATION = {
