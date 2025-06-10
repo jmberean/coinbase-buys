@@ -22,10 +22,24 @@ import sys
 # ============================================================================
 
 # Portfolio allocation
-TOTAL_INVESTMENT = 2.00
+TOTAL_INVESTMENT = 100.00
 PORTFOLIO_ALLOCATION = {
-    "LINK-USD": 0.50,  # 15% - Essential oracle infrastructure
-    "AVAX-USD": 0.50,  # 15% - Institutional tokenization platform
+    # Core Foundation (20%)Add commentMore actions
+    "BTC-USD": 0.10,   # 10% - Store of value anchor
+    "ETH-USD": 0.10,   # 10% - Smart contract foundation
+    
+    # Established Growth Plays (60%) 
+    "SOL-USD": 0.15,   # 15% - Consumer blockchain leader
+    "XRP-USD": 0.15,   # 15% - Enterprise payments with regulatory clarity
+    "LINK-USD": 0.15,  # 15% - Essential oracle infrastructure
+    "AVAX-USD": 0.15,  # 15% - Institutional tokenization platform
+    
+    # Speculative Upside (20%)
+    "UNI-USD": 0.04,   # 4% - DeFi protocol with fee switch potential
+    "QNT-USD": 0.04,   # 4% - Enterprise interoperability
+    "DOT-USD": 0.04,   # 4% - Parachain innovation
+    "ADA-USD": 0.04,   # 4% - Academic development approach
+    "DOGE-USD": 0.04,  # 4% - Community-driven payments
 }
 
 # Trading settings
