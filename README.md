@@ -1,280 +1,251 @@
-# 🚀 Coinbase WebSocket Trading Bot
+# Coinbase WebSocket Trading Bot
 
-A high-performance, real-time cryptocurrency trading bot built for Coinbase Advanced Trading API. Features WebSocket market data streaming, intelligent order placement, and dynamic portfolio allocation.
+A sophisticated, real-time cryptocurrency trading bot for Coinbase Advanced that combines WebSocket market data with intelligent order placement strategies. Designed for precision, efficiency, and minimal fees through post-only limit orders.
 
-## ✨ Features
+## 🚀 Features
 
-- **⚡ Real-time WebSocket Data**: Instant market data with REST API fallback
-- **💰 Post-Only Orders**: Always uses maker fees (lower costs)
-- **🎯 Smart Price Chasing**: Adapts to market conditions with intelligent retry logic
-- **📊 Dynamic Portfolio**: Easily configurable asset allocation
-- **🛡️ Error Handling**: Robust retry mechanisms and graceful degradation
-- **⏱️ Rate Limited**: Respects API limits with built-in throttling
-- **📈 Performance Optimized**: Sub-second trade execution times
+### Core Trading Features
+- **Real-time WebSocket Data**: Live market data streaming for instant price updates
+- **Post-Only Orders**: All orders use maker fees (lower costs) with intelligent limit pricing
+- **Smart Price Chasing**: Automatically adjusts orders when market moves significantly
+- **Portfolio Allocation**: Distribute investments across multiple cryptocurrencies with custom percentages
+- **Intelligent Precision Detection**: Automatically learns market and order precision requirements
 
-## 🎯 Performance
-
-Based on real testing:
-- **WebSocket Connection**: ~0.0s (instant)
-- **Market Data Latency**: Real-time streaming
-- **Trade Execution**: 2.6s - 29.7s (depending on market conditions)
-- **Success Rate**: 100% with proper configuration
-- **Data Source**: WebSocket + REST fallback for maximum reliability
+### Safety & Reliability
+- **Rate Limiting**: Built-in API call throttling to respect Coinbase limits
+- **Error Recovery**: Robust error handling with automatic retries and precision learning
+- **Circuit Breakers**: Prevents infinite loops with configurable failure thresholds
+- **Comprehensive Logging**: Detailed logs with timestamps for audit and debugging
+- **Graceful Cleanup**: Automatically cancels unfilled orders on timeout or exit
 
 ## 📋 Prerequisites
 
 - Python 3.7+
-- Coinbase Advanced Trading account
-- API credentials with trading permissions
+- Active Coinbase Advanced account with API access
+- Sufficient USD balance for your intended trades
 
-## 🔧 Installation
+## 🛠️ Installation
 
-1. **Clone or download the bot**:
+1. **Clone or download the script**
    ```bash
-   git clone <repository-url>
-   cd coinbase-trading-bot
+   # Save the script as coinbase-buys.py
    ```
 
-2. **Install dependencies**:
+2. **Install required packages**
    ```bash
    pip install coinbase-advanced-py python-dotenv
    ```
 
-3. **Create environment file**:
-   ```bash
-   touch .env
-   ```
-
-4. **Add your API credentials** to `.env`:
+3. **Set up API credentials**
+   
+   Create a `.env` file in the same directory:
    ```env
    COINBASE_API_KEY=your_api_key_here
    COINBASE_API_SECRET=your_api_secret_here
    ```
 
+4. **Get Coinbase API credentials**
+   - Log into [Coinbase Advanced](https://coinbase.com/advanced-trade)
+   - Go to Settings → API
+   - Create new API key with trading permissions
+   - Copy the key and secret to your `.env` file
+
 ## ⚙️ Configuration
 
-### Portfolio Allocation
+Edit the configuration section in `coinbase-buys.py`:
 
-Edit the `PORTFOLIO_ALLOCATION` in `cb-v3-websocket.py`:
-
+### Portfolio Settings
 ```python
-# Configuration - ONLY place products should be hardcoded
+# Total amount to invest (USD)
 TOTAL_INVESTMENT = 2.00
-PORTFOLIO_ALLOCATION = {
-    "BTC-USD": 0.50,  # 50%
-    "ETH-USD": 0.50,  # 50%
-}
-```
 
-**Examples**:
-
-```python
-# Conservative Portfolio
+# Portfolio allocation (must sum to 1.0)
 PORTFOLIO_ALLOCATION = {
-    "BTC-USD": 0.70,   # 70%
-    "ETH-USD": 0.30,   # 30%
-}
-
-# Diversified Portfolio
-PORTFOLIO_ALLOCATION = {
-    "BTC-USD": 0.40,   # 40%
-    "ETH-USD": 0.30,   # 30%
-    "SOL-USD": 0.20,   # 20%
-    "DOGE-USD": 0.10,  # 10%
+    "LINK-USD": 0.50,  # 50% allocation to Chainlink
+    "AVAX-USD": 0.50,  # 50% allocation to Avalanche
 }
 ```
 
 ### Trading Parameters
-
 ```python
-TOTAL_INVESTMENT = 2.00          # Total amount to invest
-PENNY_BUFFER = decimal.Decimal('0.01')    # Price buffer for orders
-MAX_CHASE_TIME = 300             # Maximum time to chase prices (5 minutes)
-MAX_CHASE_ATTEMPTS = 12          # Maximum retry attempts
-MIN_API_INTERVAL = 0.5           # Minimum time between API calls
+MAX_CHASE_TIME = 300              # Max time to chase price (seconds)
+MAX_CHASE_ATTEMPTS = 12           # Max number of order adjustments
+MIN_API_INTERVAL = 0.5           # Rate limiting between API calls
+MAX_POST_ONLY_FAILURES = 15      # Circuit breaker for post-only errors
+MAX_PRECISION_FAILURES = 3       # Circuit breaker for precision errors
 ```
 
-## 🚀 Usage
+## 🏃‍♂️ Usage
 
-Run the bot:
-```bash
-python cb-v3-websocket.py
-```
+1. **Configure your portfolio** in the script
+2. **Ensure sufficient USD balance** in your Coinbase account
+3. **Run the bot**:
+   ```bash
+   python3 coinbase-buys.py
+   ```
 
-**Sample Output**:
+### Example Output
 ```
-🚀 DYNAMIC WEBSOCKET TRADING BOT
+🚀 DYNAMIC PORTFOLIO TRADING BOT
 ==================================================
-BTC-USD: $1.00 (50.0%)
-ETH-USD: $1.00 (50.0%)
-==================================================
-📊 Trading Products: ['BTC-USD', 'ETH-USD']
+LINK-USD: $1.00 (50.0%)
+AVAX-USD: $1.00 (50.0%)
 ==================================================
 ✅ REST client initialized
 🔌 Connecting to WebSocket...
-📡 Subscribing to ticker for ['BTC-USD', 'ETH-USD']...
-✅ Subscribed to ticker for ['BTC-USD', 'ETH-USD']
-📊 WS BTC-USD: $108736.80|$108736.81
-📊 WS ETH-USD: $2590.31|$2590.40
+📡 Subscribing to ticker for ['LINK-USD', 'AVAX-USD']...
+✅ WebSocket ready! Got data for: ['LINK-USD', 'AVAX-USD']
 
-✅ WebSocket ready! Got data for: ['BTC-USD', 'ETH-USD']
+[1/2] Processing LINK-USD...
+⚡ Trading LINK-USD ($1.00)
+📏 LINK-USD: market=6dp, order=6dp (inc: 0.000001)
+⚡ INITIAL: Bid=$11.234500 | Ask=$11.234600 | Limit=$11.234550 (mid-spread)
+✅ Order placed successfully
+✅ Order filled! Size: 0.088542
 
-[1/2] Processing BTC-USD...
-⚡ Fast Trading BTC-USD ($1.0)
-    ⚡ INITIAL: Bid=$108736.80 | Ask=$108736.81 | Limit=$108736.805 (mid-spread)
-    ✅ Fast order placed (attempt 1)
-    ✅ Order filled! Size: 0.0000092
-    ⚡ BTC-USD completed in 29.7s!
+[2/2] Processing AVAX-USD...
+⚡ Trading AVAX-USD ($1.00)
+📏 AVAX-USD: market=4dp, order=4dp (inc: 0.0001)
+⚡ INITIAL: Bid=$23.4500 | Ask=$23.4600 | Limit=$23.4550 (mid-spread)
+✅ Order placed successfully
+✅ Order filled! Size: 0.0426
 
-[2/2] Processing ETH-USD...
-⚡ Fast Trading ETH-USD ($1.0)
-    ⚡ INITIAL: Bid=$2589.61 | Ask=$2589.78 | Limit=$2589.77 (below-ask)
-    ✅ Fast order placed (attempt 1)
-    ✅ Order filled! Size: 0.00038613
-    ⚡ ETH-USD completed in 2.6s!
-
-🏁 Dynamic execution complete in 32.8s!
+🏁 Execution complete in 8.3s!
 ✅ Successful: 2/2
 💰 All orders used post-only (maker fees)
-📡 Data source: WebSocket + REST fallback
-🚀 WebSocket provided real-time market data!
 ```
 
-## 🔍 How It Works
+## 🧠 How It Works
 
-### 1. WebSocket Connection
-- Connects to Coinbase Advanced Trading WebSocket
-- Subscribes to ticker data for all configured products
-- Maintains real-time market data stream
+### 1. Market Data Collection
+- Connects to Coinbase WebSocket for real-time ticker data
+- Falls back to REST API if WebSocket data is stale
+- Maintains fresh bid/ask prices for optimal order placement
 
-### 2. Smart Order Placement
-- **Tight Spreads (≤2¢)**: Uses mid-spread pricing
-- **Normal Spreads**: Uses ask-minus-buffer pricing
-- **Post-Only Orders**: Ensures maker fees (lower costs)
+### 2. Precision Detection
+- Automatically analyzes market data to determine decimal precision
+- Learns correct order precision through API error feedback
+- Separates market precision (for analysis) from order precision (for placement)
 
-### 3. Price Chasing Logic
-- Monitors market movements
-- Cancels and replaces orders for better prices
-- Adapts to `INVALID_LIMIT_PRICE_POST_ONLY` errors
-- Maximum chase time and attempt limits
+### 3. Smart Order Placement
+The bot calculates optimal limit prices based on current spread:
+- **Zero spread**: Places below both bid/ask
+- **Tight spread**: Small buffer below ask
+- **Medium spread**: Between bid and ask
+- **Wide spread**: Larger buffer below ask
 
-### 4. Fallback Strategy
-- Primary: Real-time WebSocket data
-- Fallback: REST API calls if WebSocket fails
-- Graceful degradation ensures reliability
+### 4. Price Chasing
+- Monitors market movement in real-time
+- Cancels and replaces orders when price moves significantly
+- Uses market precision to detect meaningful price changes
+- Limits chasing attempts to prevent excessive trading
+
+### 5. Order Management
+- All orders are post-only (guaranteed maker fees)
+- Automatic status checking and cleanup
+- Graceful handling of partial fills and errors
+
+## 📁 File Structure
+
+```
+├── coinbase-buys.py      # Main trading bot script
+├── .env                  # API credentials (create this)
+├── .env.example         # Example credentials file
+└── logs/                # Auto-created log directory
+    └── trading_bot_YYYYMMDD_HHMMSS.log
+```
+
+## 📊 Logging
+
+The bot creates detailed logs in the `logs/` directory with:
+- Timestamped trading actions
+- Market data updates
+- Order placement and fills
+- Error messages and recovery attempts
+- Performance metrics
+
+Log files are named with timestamps: `trading_bot_20241209_143022.log`
 
 ## ⚠️ Important Notes
 
-### Post-Only Orders
-- All orders use `post_only=True` for maker fees
-- Orders may fail with `INVALID_LIMIT_PRICE_POST_ONLY` - this is normal
-- Bot automatically retries with fresh market data
-- Ensures you pay maker fees (~0.5%) instead of taker fees (~0.6%)
+### Risk Management
+- **Start small**: Test with small amounts first
+- **Monitor actively**: Watch the first few runs closely
+- **Check balances**: Ensure sufficient USD before running
+- **Understand fees**: Post-only orders get maker fees (typically lower)
 
 ### Market Conditions
-- **Tight spreads** may require multiple attempts
-- **Volatile markets** may trigger price chasing
-- **Execution time** varies based on market liquidity
+- Works best in liquid markets with tight spreads
+- May struggle in extremely volatile conditions
+- Price chasing is limited to prevent excessive adjustments
 
-### Risk Management
-- Bot uses limit orders only (no market orders)
-- Respects API rate limits
-- Built-in timeouts prevent infinite loops
-- Post-only orders prevent unfavorable executions
+### API Limits
+- Respects Coinbase rate limits with built-in throttling
+- Uses efficient WebSocket data to minimize API calls
+- Automatically handles temporary API errors
 
-## 🐛 Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
-**"API credentials not found"**
-```bash
-# Ensure .env file exists with correct credentials
-cat .env
-```
-
-**"WebSocket timeout"**
-- Bot automatically falls back to REST API
+**WebSocket connection fails**
 - Check internet connection
-- Verify API credentials have WebSocket permissions
+- Verify API credentials have proper permissions
+- Bot will fall back to REST API automatically
 
-**"INVALID_LIMIT_PRICE_POST_ONLY errors"**
-- This is normal behavior for post-only orders
-- Bot automatically retries with fresh data
-- Indicates tight market spreads
+**Orders keep getting rejected**
+- Insufficient balance in USD wallet
+- Check if trading is enabled for your account
+- Verify API key has trading permissions
 
-**"No market data"**
-- Verify product symbols are correct (e.g., "BTC-USD")
-- Check if products are available for trading
-- Ensure API has market data permissions
+**Precision errors**
+- Bot automatically learns correct precision
+- If persistent, check Coinbase documentation for product specifications
+
+**Post-only failures**
+- Market is moving too fast for post-only orders
+- Bot will retry with adjusted pricing
+- Consider increasing MAX_POST_ONLY_FAILURES for volatile markets
 
 ### Debug Mode
-
-Uncomment debug line in message handler:
+Enable debug logging by changing the log level:
 ```python
-# Debug: Print first few messages to see actual structure
-print(f"DEBUG MSG: {json.dumps(msg, indent=2)[:200]}...")
+logging.basicConfig(level=logging.DEBUG, ...)
 ```
-
-## 📊 Testing Tools
-
-The repository includes debugging tools:
-
-**WebSocket Timing Test**:
-```bash
-python websocket-debug.py
-```
-
-This tool proves WebSocket latency and helps diagnose connection issues.
-
-## 🔐 Security
-
-- Store API credentials in `.env` file only
-- Never commit `.env` to version control
-- Use API keys with minimal required permissions
-- Consider IP whitelisting in Coinbase settings
 
 ## 📈 Performance Tips
 
-1. **Optimal Portfolio Size**: 2-5 products for best performance
-2. **Network**: Use stable, low-latency internet connection
-3. **Timing**: Avoid trading during extreme volatility
-4. **Monitoring**: Watch for rate limit warnings
+1. **Optimal Timing**: Run during high liquidity hours
+2. **Portfolio Size**: Smaller allocations may face minimum size restrictions
+3. **Network**: Stable, fast internet improves WebSocket performance
+4. **Monitoring**: Watch first few runs to understand behavior
 
-## 🔄 Customization
+## 🔒 Security
 
-### Adding New Products
-Simply update `PORTFOLIO_ALLOCATION`:
-```python
-PORTFOLIO_ALLOCATION = {
-    "BTC-USD": 0.30,
-    "ETH-USD": 0.30,
-    "SOL-USD": 0.20,
-    "ADA-USD": 0.20,
-}
-```
+- Never commit your `.env` file to version control
+- Keep API keys secure and rotate them periodically
+- Use API keys with minimal required permissions
+- Consider IP whitelisting in Coinbase settings
 
-### Adjusting Trading Behavior
-Modify parameters in the configuration section:
-- `PENNY_BUFFER`: Adjust order pricing aggressiveness
-- `MAX_CHASE_TIME`: Change how long to pursue trades
-- `SIGNIFICANT_PRICE_MOVE`: Set price movement threshold for order updates
+## 📄 Disclaimer
 
-## 📝 License
+This software is for educational and personal use only. Cryptocurrency trading involves substantial risk of loss. Always:
+- Understand the risks before trading
+- Never invest more than you can afford to lose
+- Test thoroughly with small amounts
+- Monitor your trades actively
+- Comply with all applicable laws and regulations
 
-This software is provided for educational purposes. Use at your own risk. Always test with small amounts first.
-
-## ⚠️ Disclaimer
-
-- **Educational Purpose**: This bot is for learning and experimentation
-- **Risk Warning**: Cryptocurrency trading involves significant risk
-- **Test First**: Always test with small amounts before scaling up
-- **No Guarantees**: Past performance doesn't guarantee future results
-- **Your Responsibility**: You are responsible for your trading decisions
+The authors are not responsible for any financial losses incurred through the use of this software.
 
 ## 🤝 Contributing
 
-Feel free to submit issues, feature requests, or improvements. This is an open-source educational project.
+Feel free to submit issues, feature requests, or improvements. When contributing:
+- Test changes thoroughly
+- Maintain the existing code style
+- Add appropriate logging for new features
+- Update documentation as needed
 
----
+## 📜 License
 
-**Happy Trading! 🚀💰**
+This project is open source. Use at your own risk and responsibility.
