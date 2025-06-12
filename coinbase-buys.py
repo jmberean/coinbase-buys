@@ -24,7 +24,7 @@ import sys
 # Portfolio allocation
 TOTAL_INVESTMENT = 100.00
 PORTFOLIO_ALLOCATION = {
-    # Core Foundation (20%)Add commentMore actions
+    # Core Foundation (20%)
     "BTC-USD": 0.10,   # 10% - Store of value anchor
     "ETH-USD": 0.10,   # 10% - Smart contract foundation
     
@@ -102,45 +102,98 @@ except Exception as e:
     exit()
 
 # ============================================================================
-# PRECISION DETECTOR
+# PRECISION DETECTOR - FIXED VERSION
 # ============================================================================
 
 class PrecisionDetector:
-    """Simple precision detection with separate market vs order precision"""
+    """Fixed precision detection with correct size precision for each asset"""
     
     def __init__(self):
         self.cache = {}
+        # EXACT size precision from Coinbase API (from your test results)
+        self.size_precision_overrides = {
+            'BTC-USD': 8,  # 0.00000001 BTC
+            'ETH-USD': 8,  # 0.00000001 ETH
+            'SOL-USD': 8,  # 0.00000001 SOL
+            'XRP-USD': 6,  # 0.000001 XRP
+            'LINK-USD': 2,  # 0.01 LINK
+            'AVAX-USD': 8,  # 0.00000001 AVAX
+            'UNI-USD': 6,  # 0.000001 UNI
+            'QNT-USD': 3,  # 0.001 QNT
+            'DOT-USD': 8,  # 0.00000001 DOT
+            'ADA-USD': 8,  # 0.00000001 ADA
+            'DOGE-USD': 1,  # 0.1 DOGE
+        }
+        
+        # Minimum order sizes for validation
+        self.minimum_order_sizes = {
+            'BTC-USD': {'base_min': '0.00000001', 'quote_min': '1'},
+            'ETH-USD': {'base_min': '0.00000001', 'quote_min': '1'},
+            'SOL-USD': {'base_min': '0.00000001', 'quote_min': '1'},
+            'XRP-USD': {'base_min': '0.000001', 'quote_min': '1'},
+            'LINK-USD': {'base_min': '0.01', 'quote_min': '1'},
+            'AVAX-USD': {'base_min': '0.00000001', 'quote_min': '1'},
+            'UNI-USD': {'base_min': '0.000001', 'quote_min': '1'},
+            'QNT-USD': {'base_min': '0.001', 'quote_min': '1'},
+            'DOT-USD': {'base_min': '0.00000001', 'quote_min': '1'},
+            'ADA-USD': {'base_min': '0.00000001', 'quote_min': '1'},
+            'DOGE-USD': {'base_min': '0.1', 'quote_min': '1'},
+        }
     
     def detect(self, product_id, best_bid, best_ask):
-        """Detect precision from bid/ask data - learn order precision dynamically"""
+        """Detect precision with correct size handling per asset"""
         if product_id in self.cache:
             return self.cache[product_id]
         
-        # Analyze decimal places in bid/ask for market precision
+        # Price precision from market data
         bid_decimals = len(str(best_bid).split('.')[1]) if '.' in str(best_bid) else 0
         ask_decimals = len(str(best_ask).split('.')[1]) if '.' in str(best_ask) else 0
         
-        # Market precision (for analyzing movements)
         market_precision = max(bid_decimals, ask_decimals)
         market_increment = decimal.Decimal('0.' + '0' * (market_precision - 1) + '1') if market_precision > 0 else decimal.Decimal('1')
         
-        # Start by assuming order precision = market precision (learn if wrong)
-        order_precision = market_precision
-        order_increment = market_increment
+        # Price precision (for order placement)
+        price_precision = market_precision
+        price_increment = market_increment
         
-        # Use same precision for size initially
+        # Size precision - use the CORRECT precision for this asset
+        size_precision = self.size_precision_overrides.get(product_id, 6)  # Default to 6 if unknown
+        size_increment = decimal.Decimal('0.' + '0' * (size_precision - 1) + '1') if size_precision > 0 else decimal.Decimal('1')
+        
         result = {
             'market_increment': market_increment,
             'market_precision': market_precision,
-            'price_increment': order_increment,    # For order placement
-            'price_precision': order_precision,    # For order placement
-            'size_increment': order_increment,     # Same as price initially
-            'size_precision': order_precision      # Same as price initially
+            'price_increment': price_increment,
+            'price_precision': price_precision,
+            'size_increment': size_increment,
+            'size_precision': size_precision
         }
         
         self.cache[product_id] = result
-        logger.info(f"📏 {product_id}: market={market_precision}dp, order={order_precision}dp (inc: {order_increment})")
+        logger.info(f"📏 {product_id}: price={price_precision}dp, size={size_precision}dp (inc: {size_increment})")
         return result
+    
+    def validate_order_size(self, product_id, quote_amount, base_size):
+        """Validate order meets minimum requirements"""
+        minimums = self.minimum_order_sizes.get(product_id)
+        if not minimums:
+            return True, []
+        
+        issues = []
+        
+        # Check base minimum
+        if minimums['base_min']:
+            base_min = decimal.Decimal(minimums['base_min'])
+            if base_size < base_min:
+                issues.append(f"Base size {base_size:.8f} < minimum {base_min}")
+        
+        # Check quote minimum  
+        if minimums['quote_min']:
+            quote_min = decimal.Decimal(minimums['quote_min'])
+            if decimal.Decimal(str(quote_amount)) < quote_min:
+                issues.append(f"Quote amount ${quote_amount} < minimum ${quote_min}")
+        
+        return len(issues) == 0, issues
     
     def adjust_price_precision(self, product_id, error_message):
         """Adjust order price precision based on error feedback"""
@@ -152,7 +205,7 @@ class PrecisionDetector:
             self.cache[product_id]['price_precision'] = new_precision
             self.cache[product_id]['price_increment'] = new_increment
             
-            logger.info(f"🔧 {product_id}: Learned order price precision: {current_precision} → {new_precision} decimals")
+            logger.info(f"🔧 {product_id}: Learned price precision: {current_precision} → {new_precision} decimals")
             return self.cache[product_id]
         return None
     
@@ -166,7 +219,7 @@ class PrecisionDetector:
             self.cache[product_id]['size_precision'] = new_precision
             self.cache[product_id]['size_increment'] = new_increment
             
-            logger.info(f"🔧 {product_id}: Learned order size precision: {current_precision} → {new_precision} decimals")
+            logger.info(f"🔧 {product_id}: Learned size precision: {current_precision} → {new_precision} decimals")
             return self.cache[product_id]
         return None
 
@@ -400,7 +453,7 @@ class TradingEngine:
             else:
                 # We have an existing order - check if market moved significantly
                 # Use market_increment (not order increment) for movement detection
-                significant_price_move = precision_data['market_increment'] * 2  # Lowered from 10x to 3x
+                significant_price_move = precision_data['market_increment'] * 3  # Lowered from 10x to 3x
                 
                 if last_limit_price is not None and abs(limit_price - last_limit_price) >= significant_price_move:
                     # Market moved significantly - cancel and chase with better price
