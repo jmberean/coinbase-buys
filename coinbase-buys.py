@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Coinbase WebSocket Trading Bot - Clean & Focused Version
-Intelligent precision detection, real-time WebSocket data, post-only orders
+Coinbase WebSocket Trading Bot - Fixed Version
+Improved order fill detection and reduced multiple execution risk
 """
 
 import uuid
@@ -22,7 +22,7 @@ import sys
 # ============================================================================
 
 # Portfolio allocation
-TOTAL_INVESTMENT = 100.00
+TOTAL_INVESTMENT = 200.00
 PORTFOLIO_ALLOCATION = {
     # Core Foundation (20%)
     "BTC-USD": 0.10,   # 10% - Store of value anchor
@@ -42,12 +42,14 @@ PORTFOLIO_ALLOCATION = {
     "DOGE-USD": 0.04,  # 4% - Community-driven payments
 }
 
-# Trading settings
+# Trading settings - IMPROVED
 MAX_CHASE_TIME = 300
-MAX_CHASE_ATTEMPTS = 12
+MAX_CHASE_ATTEMPTS = 8  # Reduced from 12
 MIN_API_INTERVAL = 0.5
-MAX_POST_ONLY_FAILURES = 15
+MAX_POST_ONLY_FAILURES = 10  # Reduced from 15
 MAX_PRECISION_FAILURES = 3
+MIN_ORDER_WAIT_TIME = 2.0  # NEW: Minimum time before checking order status
+MIN_CHASE_WAIT_TIME = 5.0  # NEW: Minimum time before price chasing
 
 # Calculate amounts
 CRYPTOS_TO_BUY = {
@@ -315,11 +317,11 @@ class WebSocketHandler:
             logger.error(f"❌ WebSocket error: {e}")
 
 # ============================================================================
-# TRADING ENGINE
+# TRADING ENGINE - FIXED VERSION
 # ============================================================================
 
 class TradingEngine:
-    """Core trading logic with smart pricing"""
+    """Core trading logic with improved order management"""
     
     def __init__(self, ws_handler, precision_detector):
         self.ws_handler = ws_handler
@@ -387,29 +389,32 @@ class TradingEngine:
             return str(e), False
     
     def check_order_status(self, order_id):
-        """Check if order is filled"""
-        try:
-            response = self.safe_api_call(rest_client.get_order, order_id)
-            if hasattr(response, 'order') and response.order:
-                status = response.order.status
-                filled_size = decimal.Decimal(str(response.order.filled_size or '0'))
-                return status, filled_size, True
-            return None, None, False
-        except Exception as e:
-            logger.warning(f"⚠️ Order check failed: {e}")
-            return None, None, False
+        """Check if order is filled with retry logic"""
+        for attempt in range(2):  # Try twice for better reliability
+            try:
+                response = self.safe_api_call(rest_client.get_order, order_id)
+                if hasattr(response, 'order') and response.order:
+                    status = response.order.status
+                    filled_size = decimal.Decimal(str(response.order.filled_size or '0'))
+                    return status, filled_size, True
+            except Exception as e:
+                logger.warning(f"⚠️ Order check attempt {attempt + 1} failed: {e}")
+                if attempt == 0:
+                    time.sleep(0.5)  # Brief pause before retry
+        return None, None, False
     
     def execute_trade(self, product_id, quote_amount):
-        """Execute single trade with smart retry logic and price chasing"""
+        """IMPROVED: Execute single trade with better fill detection and conservative chasing"""
         logger.info(f"\n⚡ Trading {product_id} (${quote_amount})")
         
         start_time = time.time()
         chase_count = 0
         current_order_id = None
-        last_limit_price = None  # Track last order price for chasing
+        last_limit_price = None
         precision_failures = 0
         post_only_failures = 0
         precision_data = None
+        order_place_time = None  # NEW: Track when order was placed
         
         while (time.time() - start_time) < MAX_CHASE_TIME and chase_count < MAX_CHASE_ATTEMPTS:
             
@@ -432,16 +437,15 @@ class TradingEngine:
             if precision_data is None:
                 precision_data = self.precision_detector.detect(product_id, best_bid, best_ask)
             
-            # Calculate limit price using order precision
+            # Calculate limit price
             limit_price, strategy = self.calculate_limit_price(
                 best_bid, best_ask, precision_data['price_increment']
             )
             
-            # Ensure valid post-only price (< ask)
+            # Ensure valid post-only price
             if limit_price >= best_ask:
                 limit_price = best_ask - precision_data['price_increment']
             
-            # CHASING LOGIC: Pure price-movement based (no time component)
             should_place_order = False
             action = "UNKNOWN"
             
@@ -451,26 +455,8 @@ class TradingEngine:
                 action = "INITIAL"
                 
             else:
-                # We have an existing order - check if market moved significantly
-                # Use market_increment (not order increment) for movement detection
-                significant_price_move = precision_data['market_increment'] * 3  # Lowered from 10x to 3x
-                
-                if last_limit_price is not None and abs(limit_price - last_limit_price) >= significant_price_move:
-                    # Market moved significantly - cancel and chase with better price
-                    move_amount = limit_price - last_limit_price
-                    logger.info(f"    🏃 Market moved! ${last_limit_price:.{precision_data['price_precision']}f} → ${limit_price:.{precision_data['price_precision']}f} ({move_amount:+.{precision_data['market_precision']}f})")
-                    try:
-                        self.safe_api_call(rest_client.cancel_orders, [current_order_id])
-                        logger.debug(f"    ✅ Cancelled order for price chasing")
-                    except Exception as e:
-                        logger.warning(f"    ⚠️ Cancel failed: {e}")
-                    
-                    current_order_id = None
-                    should_place_order = True
-                    action = f"CHASE #{chase_count + 1}"
-                    
-                else:
-                    # Price hasn't moved significantly - check existing order status
+                # IMPROVED: Check order status first, but only after minimum wait time
+                if order_place_time and (time.time() - order_place_time) >= MIN_ORDER_WAIT_TIME:
                     status, filled_size, status_ok = self.check_order_status(current_order_id)
                     if status_ok and status == 'FILLED':
                         logger.info(f"    ✅ Order filled! Size: {filled_size}")
@@ -480,7 +466,39 @@ class TradingEngine:
                         current_order_id = None
                         should_place_order = True
                         action = "RETRY"
-                    # If status is 'OPEN' or check failed, continue monitoring (no action needed)
+                        order_place_time = None
+                
+                # IMPROVED: Only consider chasing after sufficient wait time AND significant movement
+                if (current_order_id is not None and 
+                    order_place_time and 
+                    (time.time() - order_place_time) >= MIN_CHASE_WAIT_TIME):  # Wait longer before chasing
+                    
+                    # IMPROVED: More conservative chasing - larger threshold
+                    significant_price_move = precision_data['market_increment'] * 10  # Increased from 3x to 10x
+                    
+                    if last_limit_price is not None and abs(limit_price - last_limit_price) >= significant_price_move:
+                        # Market moved significantly - but double-check order status first
+                        move_amount = limit_price - last_limit_price
+                        logger.info(f"    🏃 Large market move detected! ${last_limit_price:.{precision_data['price_precision']}f} → ${limit_price:.{precision_data['price_precision']}f} ({move_amount:+.{precision_data['market_precision']}f})")
+                        
+                        # IMPROVED: Always double-check order isn't filled before canceling
+                        status, filled_size, status_ok = self.check_order_status(current_order_id)
+                        if status_ok and status == 'FILLED':
+                            logger.info(f"    ✅ Order filled during chase check! Size: {filled_size}")
+                            return True
+                        
+                        # Proceed with canceling and chasing
+                        try:
+                            self.safe_api_call(rest_client.cancel_orders, [current_order_id])
+                            logger.debug(f"    ✅ Cancelled order for price chasing")
+                            time.sleep(1)  # Wait for cancel to process
+                        except Exception as e:
+                            logger.warning(f"    ⚠️ Cancel failed: {e}")
+                        
+                        current_order_id = None
+                        should_place_order = True
+                        action = f"CHASE #{chase_count + 1}"
+                        order_place_time = None
             
             if should_place_order:
                 chase_count += 1
@@ -492,7 +510,8 @@ class TradingEngine:
                 
                 if order_success:
                     current_order_id = order_result
-                    last_limit_price = limit_price  # Remember this price for chasing
+                    last_limit_price = limit_price
+                    order_place_time = time.time()  # NEW: Track when order was placed
                     precision_failures = 0
                     post_only_failures = 0
                     logger.info(f"    ✅ Order placed successfully")
@@ -503,7 +522,6 @@ class TradingEngine:
                         post_only_failures += 1
                         continue
                     elif 'INVALID_PRICE_PRECISION' in str(order_result):
-                        # Learn the correct order price precision
                         precision_data = self.precision_detector.adjust_price_precision(product_id, order_result)
                         if precision_data:
                             logger.info(f"    🔄 Retrying with learned price precision")
@@ -512,7 +530,6 @@ class TradingEngine:
                             precision_failures += 1
                             continue
                     elif 'INVALID_SIZE_PRECISION' in str(order_result):
-                        # Learn the correct size precision
                         precision_data = self.precision_detector.adjust_size_precision(product_id, order_result)
                         if precision_data:
                             logger.info(f"    🔄 Retrying with learned size precision")
@@ -520,19 +537,24 @@ class TradingEngine:
                         else:
                             precision_failures += 1
                             continue
+                    elif 'INSUFFICIENT_FUND' in str(order_result):
+                        logger.error(f"    💰 Insufficient funds - stopping trade")
+                        return False
                     else:
-                        time.sleep(0.5)
+                        time.sleep(1)  # Longer wait on unknown errors
                         continue
             
-            time.sleep(0.5)
+            time.sleep(1)  # IMPROVED: Longer sleep between iterations
         
-        # Cleanup
+        # IMPROVED: Multiple final checks for fills during cleanup
         if current_order_id:
-            # Final check if order filled during timeout
-            status, filled_size, status_ok = self.check_order_status(current_order_id)
-            if status_ok and status == 'FILLED':
-                logger.info(f"    ✅ Order filled at timeout! Size: {filled_size}")
-                return True
+            logger.info(f"    🔍 Final fill checks...")
+            for i in range(3):  # Check 3 times
+                status, filled_size, status_ok = self.check_order_status(current_order_id)
+                if status_ok and status == 'FILLED':
+                    logger.info(f"    ✅ Order filled at timeout! Size: {filled_size}")
+                    return True
+                time.sleep(1)
             
             # Cancel unfilled order
             try:
@@ -550,7 +572,7 @@ class TradingEngine:
 
 def main():
     """Main trading execution"""
-    logger.info("🚀 DYNAMIC PORTFOLIO TRADING BOT")
+    logger.info("🚀 DYNAMIC PORTFOLIO TRADING BOT - FIXED VERSION")
     logger.info("=" * 50)
     for crypto, amount in CRYPTOS_TO_BUY.items():
         percentage = (amount / TOTAL_INVESTMENT) * 100
@@ -604,7 +626,7 @@ def main():
             logger.error(f"    ❌ {crypto} failed after {trade_time:.1f}s")
         
         if i < total_trades:
-            time.sleep(0.5)
+            time.sleep(1)  # Longer pause between trades
     
     total_time = time.time() - start_total
     logger.info(f"\n🏁 Execution complete in {total_time:.1f}s!")
