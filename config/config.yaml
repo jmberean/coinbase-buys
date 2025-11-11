@@ -1,0 +1,72 @@
+# Trading Bot Configuration
+#
+# All timing values are in seconds
+# All numeric values can be adjusted based on your risk tolerance
+
+trading:
+  # Maximum time to chase price for a single trade (seconds)
+  max_chase_time: 300
+
+  # Maximum number of order placement attempts (initial + chases)
+  max_chase_attempts: 8
+
+  # Minimum time between API calls (seconds) - respects rate limits
+  min_api_interval: 0.5
+
+  # Minimum time before checking order status after placement (seconds)
+  min_order_wait_time: 2.0
+
+  # Minimum time before considering price chasing (seconds)
+  min_chase_wait_time: 5.0
+
+  # Price movement multiplier to trigger chasing (larger = less aggressive)
+  # Example: 10 means price must move 10x market increment to chase
+  chase_threshold_multiplier: 10
+
+  # Minimum percentage of order filled to consider trade successful (0-100)
+  # Example: 95.0 means 95% or more filled = success
+  completion_threshold_percentage: 95.0
+
+circuit_breakers:
+  # Maximum consecutive post-only order failures before stopping
+  max_post_only_failures: 10
+
+  # Maximum consecutive precision errors before stopping
+  max_precision_failures: 3
+
+websocket:
+  # Timeout for WebSocket connection (seconds)
+  connection_timeout: 15
+
+  # Maximum age of WebSocket data before using REST fallback (seconds)
+  data_freshness_timeout: 5
+
+  # WebSocket reconnection settings
+  enable_reconnection: true
+  max_reconnection_attempts: 5
+  reconnection_delay: 3
+  reconnection_backoff_multiplier: 2
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: INFO
+
+  # Directory for log files
+  log_directory: logs
+
+  # Enable/disable console output
+  console_output: true
+
+  # Maximum number of log files to keep (0 = unlimited)
+  max_log_files: 30
+
+safety:
+  # Enable dry-run mode (simulates trades without placing real orders)
+  dry_run: false
+
+  # Validate portfolio allocation sums to 1.0 (with tolerance)
+  validate_allocation: true
+  allocation_tolerance: 0.01
+
+  # Perform health checks before trading
+  enable_health_checks: true

@@ -1,0 +1,11 @@
+# Coinbase Trading Bot Requirements
+
+# Coinbase SDK
+coinbase-advanced-py>=1.2.0
+
+# Configuration
+python-dotenv>=1.0.0
+PyYAML>=6.0.1
+
+# Type hints support (Python < 3.10)
+typing-extensions>=4.0.0; python_version < "3.10"

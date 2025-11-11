@@ -11,7 +11,7 @@
     "base_increment": "0.00000001",
     "quote_increment": "0.01",
     "price_increment": "0.01",
-    "current_price": "108258.69"
+    "current_price": "117850.42"
   },
   "ETH-USD": {
     "product_id": "ETH-USD",
@@ -25,7 +25,7 @@
     "base_increment": "0.00000001",
     "quote_increment": "0.01",
     "price_increment": "0.01",
-    "current_price": "2764.2"
+    "current_price": "3544.27"
   },
   "SOL-USD": {
     "product_id": "SOL-USD",
@@ -39,7 +39,7 @@
     "base_increment": "0.00000001",
     "quote_increment": "0.01",
     "price_increment": "0.01",
-    "current_price": "160.02"
+    "current_price": "175.67"
   },
   "XRP-USD": {
     "product_id": "XRP-USD",
@@ -53,7 +53,7 @@
     "base_increment": "0.000001",
     "quote_increment": "0.0001",
     "price_increment": "0.0001",
-    "current_price": "2.2536"
+    "current_price": "3.3709"
   },
   "LINK-USD": {
     "product_id": "LINK-USD",
@@ -67,7 +67,7 @@
     "base_increment": "0.01",
     "quote_increment": "0.001",
     "price_increment": "0.001",
-    "current_price": "14.531"
+    "current_price": "17.691"
   },
   "AVAX-USD": {
     "product_id": "AVAX-USD",
@@ -81,7 +81,7 @@
     "base_increment": "0.00000001",
     "quote_increment": "0.01",
     "price_increment": "0.01",
-    "current_price": "21.21"
+    "current_price": "23.44"
   },
   "UNI-USD": {
     "product_id": "UNI-USD",
@@ -95,7 +95,7 @@
     "base_increment": "0.000001",
     "quote_increment": "0.001",
     "price_increment": "0.001",
-    "current_price": "7.949"
+    "current_price": "10.014"
   },
   "QNT-USD": {
     "product_id": "QNT-USD",
@@ -109,7 +109,7 @@
     "base_increment": "0.001",
     "quote_increment": "0.01",
     "price_increment": "0.01",
-    "current_price": "117.65"
+    "current_price": "109.77"
   },
   "DOT-USD": {
     "product_id": "DOT-USD",
@@ -123,7 +123,7 @@
     "base_increment": "0.00000001",
     "quote_increment": "0.001",
     "price_increment": "0.001",
-    "current_price": "4.09"
+    "current_price": "4.188"
   },
   "ADA-USD": {
     "product_id": "ADA-USD",
@@ -137,7 +137,7 @@
     "base_increment": "0.00000001",
     "quote_increment": "0.0001",
     "price_increment": "0.0001",
-    "current_price": "0.6868"
+    "current_price": "0.8165"
   },
   "DOGE-USD": {
     "product_id": "DOGE-USD",
@@ -151,6 +151,6 @@
     "base_increment": "0.1",
     "quote_increment": "0.00001",
     "price_increment": "0.00001",
-    "current_price": "0.18984"
+    "current_price": "0.24044"
   }
 }

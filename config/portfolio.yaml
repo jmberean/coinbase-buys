@@ -1,0 +1,16 @@
+# Portfolio Allocation Configuration
+#
+# Specify the percentage allocation for each cryptocurrency
+# Total should sum to 1.0 (100%)
+#
+# Example allocations provided below - adjust to your investment strategy
+
+portfolio:
+  # Core Foundation (20%)
+  # BTC-USD: 0.10   # 10% - Store of value anchor
+  ETH-USD: 0.33   # 10% - Smart contract foundation
+  SOL-USD: 0.33   # 100% - Consumer blockchain leader (adjust as needed)
+  XRP-USD: 0.33   # 15% - Enterprise payments with regulatory clarity
+
+# Total investment amount in USD
+total_investment: 10.00
