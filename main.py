@@ -254,16 +254,18 @@ def main() -> int:
         )
         logger.info("✅ REST client initialized")
 
+        # Product specs path
+        product_specs_path = Path("data/coinbase_product_specs.json")
+
         # Health checks
         if config['safety'].enable_health_checks:
-            product_specs_path = Path("coinbase_product_specs.json")
             if not perform_health_checks(rest_client, config['portfolio'], product_specs_path):
                 logger.error("❌ Health checks failed, aborting")
                 return 1
 
         # Initialize precision detector
         logger.info("📏 Loading product specifications...")
-        precision_detector = PrecisionDetector(Path("coinbase_product_specs.json"))
+        precision_detector = PrecisionDetector(product_specs_path)
 
         # Calculate trade amounts
         products = list(config['portfolio'].allocation.keys())
